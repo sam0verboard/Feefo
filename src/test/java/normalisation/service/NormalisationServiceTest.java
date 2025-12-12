@@ -1,25 +1,34 @@
 package normalisation.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.io.IOException;
 import normalisation.model.NormalisationInput;
 import normalisation.model.NormalisationInputType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.boot.test.context.SpringBootTest;
 
-public class NormalisationServiceTest {
-    @Autowired
-    public NormalisationService normalisationService;
+@SpringBootTest
+class NormalisationServiceTest {
+  @Autowired public NormalisationService normalisationService;
 
-    @Test
-    public void whenInputTypeSupported_thenCorrectOutput() {
-        NormalisationInput input = new NormalisationInput("test", NormalisationInputType.JOB_TITLE);
-        assertEquals("Expected text", normalisationService.normalise(input).getText());
-    }
+  @Test
+  void normalise_givesCorrectOutput_whenInputTypeSupported() throws IOException {
+    String title = "Software engineer";
+    NormalisationInput input = new NormalisationInput(title, NormalisationInputType.JOB_TITLE);
+    assertEquals(title, normalisationService.normalise(input).getText());
+  }
 
-    @Test
-    public void whenInputTypeSupported_thenThrowException() {
-        NormalisationInput input = new NormalisationInput("test", NormalisationInputType.FUTURE_UNSUPPORTED_TYPE);
-        assertThrows(UnsupportedOperationException.class,
-                () -> normalisationService.normalise(input));
-    }
+  @Test
+  void normalise_ThrowsException_whenInputTypeSupported() {
+    NormalisationInput input =
+        new NormalisationInput("test", NormalisationInputType.FUTURE_UNSUPPORTED_TYPE);
+    assertThrows(UnsupportedOperationException.class, () -> normalisationService.normalise(input));
+  }
+
+  @Test
+  void normalise_ThrowsException_whenNullInput() {
+    assertThrows(UnsupportedOperationException.class, () -> normalisationService.normalise(null));
+  }
 }

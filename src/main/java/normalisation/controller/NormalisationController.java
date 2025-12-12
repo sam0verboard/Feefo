@@ -1,7 +1,8 @@
 package normalisation.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
+import lombok.extern.slf4j.Slf4j;
 import normalisation.model.NormalisationInput;
 import normalisation.model.NormalisationOutput;
 import normalisation.service.NormalisationService;
@@ -9,45 +10,30 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
+/** Rest controller for normalising job titles endpoint. */
+@Slf4j
 @RestController
 @RequestMapping("/rest/normalise")
 public class NormalisationController {
+  @Autowired private NormalisationService normalisationService;
 
-    @Autowired
-    private NormalisationService normalisationService;
-
-    @PostMapping(
-            path = "",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<NormalisationOutput> normaliseJobTitle(
-            @Valid @RequestBody NormalisationInput input) {
-        return new ResponseEntity<>(normalisationService.normalise(input), HttpStatus.OK);
+  @PostMapping(
+      path = "",
+      consumes = MediaType.APPLICATION_JSON_VALUE,
+      produces = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<NormalisationOutput> normalise(
+      @Valid @RequestBody NormalisationInput input) {
+    try {
+      NormalisationOutput result = normalisationService.normalise(input);
+      return ResponseEntity.ok(result);
+    } catch (IOException e) {
+      log.error("Failed to normalise job title '{}'", input, e);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
-
-
-    // Move to exception handler
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationException(
-            MethodArgumentNotValidException ex) {
-        return ex.getBindingResult().getAllErrors().stream()
-                .filter(objectError -> objectError instanceof FieldError)
-                .map(objectError -> (FieldError) objectError)
-                .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage));
-    }
-    @ExceptionHandler(UnsupportedOperationException.class)
-    public ResponseEntity<Map<String, String>> handleUnsupportedOperationException(UnsupportedOperationException ex) {
-        return ResponseEntity
-                .badRequest()
-                .body(Map.of("error", ex.getMessage()));
-    }
-
+  }
 }

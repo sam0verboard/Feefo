@@ -1,0 +1,15 @@
+data:
+  hostname: "localhost"
+  port: 9200
+  batchSize: 500
+  datasets:
+    jobTitles:
+      importOnStartup: true
+      filename: "job-titles.json"
+      jsonRoot: "job-titles"
+      indexName: "job_titles"
+    futureDataset:
+      importOnStartup: false
+      filename: ""
+      jsonRoot: ""
+      indexName: "future_index"
